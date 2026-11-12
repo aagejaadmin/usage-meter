@@ -33,6 +33,12 @@
  * Customer settings for the usage pages: ./clients.json (optional).
  *
  * ---------------------------------------------------------------------------
+ * v1.1.0 (November 2026) — run list on each customer's page
+ *   - A customer's usage page now lists its runs, newest first: time (UTC,
+ *     to the second), agent, seat and MindStudio run id, so each row can be
+ *     matched to MindStudio's own run log. Latest 500 on the page; the CSV
+ *     always has every row. Nothing recorded or answered by /meter changed.
+ *
  * v1.0.0 (October 2026) — first version
  *   - POST /meter records one completed run. A run that fails part-way never
  *     reaches the agent's last block, so only completed runs are counted —
@@ -64,7 +70,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const PORT = process.env.PORT || 3000;
 const SERVICE_KEY = process.env.SERVICE_KEY || '';
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
@@ -344,6 +350,11 @@ const monthLabel = (ym) => {
   return new Date(Date.UTC(yy, mm - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 };
 const dayLabel = (ms) => new Date(ms).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const timeLabel = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZone: 'UTC' });
+};
 const agentName = (slug) => AGENT_NAMES[slug] || slug;
 
 const CSS = `
@@ -367,6 +378,7 @@ th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white
 th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:600}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 a{color:var(--teal)}
+code{font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--mute)}
 footer{color:var(--mute);font-size:12px;margin-top:16px}
 `;
 
@@ -443,6 +455,14 @@ function renderClient(clientId, key) {
   const csv = `/usage/${encodeURIComponent(clientId)}/csv?k=${encodeURIComponent(key)}`;
   const back = `/usage?k=${encodeURIComponent(key)}`;
 
+  // Every run, newest first, so a row can be matched to MindStudio's own
+  // run log by its run id. The time is when the agent's meter step ran, at
+  // the end of the run; MindStudio lists runs by their start time. Capped so
+  // the page stays light — the CSV always has every row.
+  const RUNS_SHOWN = 500;
+  const recent = s.rows.slice().reverse().slice(0, RUNS_SHOWN);
+  const runsNote = `<p class="note">Newest first. The time is when the run finished. The run id is the one MindStudio shows for the same run.${s.rows.length > RUNS_SHOWN ? ` Showing the latest ${num(RUNS_SHOWN)} of ${num(s.rows.length)}; the CSV has every row.` : ''}</p>`;
+
   // Seats are shown by seat id only. Seat labels can carry initials, and a
   // label beside a run count identifies a person — the Order Form limits
   // usage data to opaque seat identifiers.
@@ -456,7 +476,10 @@ ${table([['Month'], ['Runs', true]], [...byMonth.entries()].sort((a, b) => (a[0]
 <h2>By agent</h2>
 ${table([['Agent'], ['This month', true], ['All time', true]], [...byAgent.entries()].sort((a, b) => b[1].t - a[1].t).map(([slug, v]) => [[esc(agentName(slug))], [num(v.m), true], [num(v.t), true]]), 'No completed runs recorded yet.')}
 <h2>By seat</h2>
-${table([['Seat'], ['This month', true], ['All time', true]], [...bySeat.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([id, v]) => [[esc(id)], [num(v.m), true], [num(v.t), true]]), 'No completed runs recorded yet.')}`;
+${table([['Seat'], ['This month', true], ['All time', true]], [...bySeat.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([id, v]) => [[esc(id)], [num(v.m), true], [num(v.t), true]]), 'No completed runs recorded yet.')}
+<h2>Runs</h2>
+${runsNote}
+${table([['Time (UTC)'], ['Agent'], ['Seat'], ['Run id']], recent.map((r) => [[esc(timeLabel(r.t))], [esc(agentName(r.agent))], [esc(r.seat)], [`<code>${esc(r.run_id)}</code>`]]), 'No completed runs recorded yet.')}`;
   return page(`Usage · ${s.name}`, inner);
 }
 

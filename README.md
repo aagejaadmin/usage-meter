@@ -39,7 +39,7 @@ says so on `/healthz`, in its log and on every usage page.
 `/healthz` should read:
 
 ```json
-{ "ok": true, "version": "1.0.0", "meter_recording": true,
+{ "ok": true, "version": "1.1.0", "meter_recording": true,
   "service_key": "matches", "admin_key_present": true }
 ```
 
@@ -51,10 +51,10 @@ every run will be refused until they match.
 | Page | |
 |---|---|
 | `/usage?k=ADMIN_KEY` | Every customer: this month, contract year, all time |
-| `/usage/<client_id>?k=ADMIN_KEY` | One customer, by month, agent and seat |
+| `/usage/<client_id>?k=ADMIN_KEY` | One customer, by month, agent and seat, then every run: time, agent, seat, run id |
 | `/usage/<client_id>/csv?k=ADMIN_KEY` | Every row, as a file |
 
-Times are UTC. Seats are shown by seat id only.
+Times are UTC. A run's time is when it finished; its run id is the one MindStudio shows for the same run. Seats are shown by seat id only.
 
 ## Customer settings — `clients.json`
 
