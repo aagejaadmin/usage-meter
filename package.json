@@ -1,0 +1,11 @@
+{
+  "name": "aageja-usage-meter",
+  "version": "1.0.0",
+  "description": "Counts completed AaGeJa agent runs per customer and seat, for usage reporting and overage billing.",
+  "main": "meter-service.js",
+  "scripts": {
+    "start": "node meter-service.js"
+  },
+  "engines": { "node": ">=18" },
+  "private": true
+}
