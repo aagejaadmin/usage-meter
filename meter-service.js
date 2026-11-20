@@ -33,6 +33,11 @@
  * Customer settings for the usage pages: ./clients.json (optional).
  *
  * ---------------------------------------------------------------------------
+ * v1.1.1 (November 2026) — Test Item Builder named on the usage pages
+ *   - AGENT_NAMES gains 'test-item-builder': 'Test Item Builder'. Display
+ *     only: /meter already records any agent name, and nothing recorded or
+ *     answered by /meter changed.
+ *
  * v1.1.0 (November 2026) — run list on each customer's page
  *   - A customer's usage page now lists its runs, newest first: time (UTC,
  *     to the second), agent, seat and MindStudio run id, so each row can be
@@ -70,7 +75,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 const PORT = process.env.PORT || 3000;
 const SERVICE_KEY = process.env.SERVICE_KEY || '';
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
@@ -98,6 +103,7 @@ const AGENT_NAMES = {
   'lms-packager': 'LMS Packager',
   'reviewer': 'Independent Reviewer',
   'screenshot-library-builder': 'Screenshot Library Builder',
+  'test-item-builder': 'Test Item Builder',
 };
 
 // ---------------------------------------------------------------------------
